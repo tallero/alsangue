@@ -1,0 +1,12 @@
+{       "it_IT.UTF-8": {	"title":	"Example page",
+        			"content":	"""
+                                                Sono una pagina di esempio!
+		                                """},
+        "en_US.UTF-8": {          "title":       "Example page",
+                                 "content":     """
+                                                I'm an example page!
+                                                """
+                       },
+	"author":	"You",
+	"date":		"2018/10/09"
+}

@@ -1,0 +1,45 @@
+{
+"author":	"You",
+"email":	"you@mywebsite.domain",
+"pgp":		"XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX",
+"btc":          "0000000000000000000000mybtcaddress",
+"doge":         "000000000000000000000mydogeaddress",
+"xmpp":		"you@mywebsite.domain",
+"sections":	[{"it_IT.UTF-8":{	"title":	"Bio",
+					"content":	"""Il copyleft renderà il mondo migliore."""
+
+		 		},
+                  "en_US.UTF-8":{       "title":        "Bio",
+                                        "content":      """Copyleft will make the world a better place to live."""
+                                }
+                 },
+                 {"it_IT.UTF-8":{	"title":	"Interessi",
+                                        "content":      """<ul>
+                                                               <li>disquisire su Aristotele;</li>
+                                                               <li>studiare;</li>
+                                                               <li>fare baldoria.</li>
+                                                           <ul>
+                                                        """
+                               },
+                  "en_US.UTF-8":{        "title":	"Interests",
+                                        "content":      """<ul>
+                                                                <li>quibble on Aristotle;</li>
+                                                                <li>studying;</li>
+                                                                <li>have fun.</li>
+                                                           </ul>
+                                                        """
+                               }
+                 },
+                 {"it_IT.UTF-8":{	"title":	"Profili",
+                                        "content":      """<ul><li><a href="https://arcipelago.ml">Arcipelago</a>
+                                                           </ul>
+                                                        """
+                               },
+                 "en_US.UTF-8":{       "title":        "External IDs",
+                                        "content":      """<ul>
+                                                               <li><a href="https://arcipelago.ml">Arcipelago</a>
+                                                           </ul>
+                                                        """
+                               }
+                }]
+}
