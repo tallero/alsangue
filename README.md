@@ -20,7 +20,10 @@ After setting up pip, you can install *alsangue* by simply typing in your termin
 
     alsangue <command> --help
 
-You can find an example `content` directory in this repo which you can edit to build your own website.
+You can find an example `content` directory in this repo which you can edit to build your own website. To build it just type:
+
+    cd alsangue/example
+    alsangue content build
 
 ## About
 
