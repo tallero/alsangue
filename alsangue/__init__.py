@@ -32,9 +32,14 @@ from os import chdir as cd
 from os import symlink as ln
 from os import remove as rm
 from os.path import realpath, dirname, relpath, getmtime
+from setproctitle import setproctitle
 from shutil import copyfile as cp
 from time import strftime, strptime, localtime
 import locale
+
+name = "alsangue"
+
+setproctitle(name)
 
 hidden = lambda f : f.startswith('.')
 

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name = "alsangue",
-    version = "0.1.3",
+    version = "0.1.4",
     author = "Pellegrino Prevete",
     author_email = "pellegrinoprevete@gmail.com",
     description = "naive static website builder",
@@ -21,6 +21,7 @@ setup(
         'console_scripts': ['alsangue = alsangue:main']
     },
     install_requires = [
+    'setproctitle',
     'beautifulsoup4',
     ],
     classifiers = [
