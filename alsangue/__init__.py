@@ -63,7 +63,7 @@ def date_print(date):
     date = strptime(date, "%Y/%M/%d")
     return strftime('%d %B %Y', date)
 
-def getlastedit(f):
+def getlastedit(f,sitemap=False):
     """Return the date of the last edit of a file
     
     Args:
@@ -73,6 +73,8 @@ def getlastedit(f):
     """
     epoch = getmtime(f)
     date = localtime(epoch)
+    if sitemap:
+        return strftime('%Y-%m-%d', date)
     return strftime('%d %B %Y', date)
 
 def dict_from_file(f):
@@ -101,6 +103,44 @@ def load(f):
         g.close()
     return content
 
+def save(soup, file):
+    """Save a soup object in file
+
+    Args:
+        soup: instance of BeautifulSoup object
+        file (str): path of the file
+    """
+    with open(file, "w") as f:
+        f.write(str(soup))
+        f.close()
+
+class Sitemap:
+    def __init__(self, path):
+        code = """<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset> """
+        self.path = path
+        self.soup = BeautifulSoup(code, 'lxml')
+        self.urlset = self.soup.find('urlset')
+
+    def add_url(self, loc, lastmod=None, changefreq='monthly', priority='0.5'):
+        soup = BeautifulSoup('', 'lxml')
+        url = soup.new_tag('url')
+        loc_tag = soup.new_tag('loc')
+        loc_tag.append(loc)
+        url.append(loc_tag)
+        if lastmod != None:
+            lastmod_tag = soup.new_tag('lastmod')
+            lastmod_tag.append(lastmod)
+            url.append(lastmod_tag)
+        changefreq_tag = soup.new_tag('changefreq')
+        changefreq_tag.append(changefreq)
+        url.append(changefreq_tag)
+        priority_tag = soup.new_tag('priority')
+        priority_tag.append(priority)
+        url.append(priority_tag)
+        self.urlset.append(url)
+
+    def save(self):
+        save(self.soup, self.path + "/sitemap.xml")        
 
 class Builder:
     """Builds the website
@@ -135,6 +175,8 @@ class Builder:
                 l['build path'] = lambda x: "/" + x[1:]
         self.build_tree()
 
+        self.sitemap = Sitemap(build_path)
+
         self.templates_path = content_path + "/templates"
       
         self.articles = [realpath(content_path + "/articles/" + a) for a in ls(content_path + "/articles")]
@@ -151,7 +193,9 @@ class Builder:
                 ln(self.build_path + l['build path'](self.config['homepage'] + ".html"), self.build_path + l['build path']("/index.html"))
             except FileExistsError as e:
                 rm(self.build_path + l['build path']("/index.html"))
-                ln(self.build_path + l['build path'](self.config['homepage'] + ".html"), self.build_path + l['build path']("/index.html"))
+                ln(self.build_path + l['build path'](self.config['homepage'] + ".html"), self.build_path + l['build path']("/index.html")) 
+
+        self.sitemap.save()
 
     def build_tree(self):
         """Create directories structure in build directory
@@ -183,18 +227,6 @@ class Builder:
                 except FileExistsError as e:
                     pass
 
-    def save(self, soup, file):
-        """Save a soup object in file
-
-        Args:
-            soup: instance of BeautifulSoup object
-            file (str): path of the file
-        """
-        with open(file, "w") as f:
-            f.write(str(soup))
-            f.close()
-
-
     def build_article(self, article): 
         """Build an html page for an article
 
@@ -212,6 +244,7 @@ class Builder:
         article_name = article.split("/")[-1]
         article_page = "/articles/" + article_name + ".html"
         article_path = {}
+        loc = {}
         for l in locales:
             article_path[l["code"]] = self.config['domain'] + l["build path"](article_page)
 
@@ -250,7 +283,7 @@ class Builder:
 
             lastedit = soup.find(id="last-edit")
             lastedit.string = l["last-edit"] + getlastedit(article) 
-            
+ 
             locales_tag = soup.find(id="locales")
             for m in locales:
                 if m == l:
@@ -266,8 +299,11 @@ class Builder:
             license_tag = soup.find(id="license")
             license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
             license_tag.append(license_soup)
-   
-            self.save(soup, self.build_path + l['build path'](article_page))
+
+            article_sitemap = copy(article_path[l['code']])
+            self.sitemap.add_url(article_sitemap, getlastedit(article, sitemap=True), changefreq='monthly', priority='0.8')
+
+            save(soup, self.build_path + l['build path'](article_page))
 
     def select_articles(self, locale, sort="last_edit_recent_to_old", author=None):
         """Select articles according to different criteria.
@@ -310,14 +346,15 @@ class Builder:
         """
         document = dict_from_file(author)
 
-        author = author.split("/")[-1]
-        author_page = "/authors/" + author + ".html"
-        archive_page = "/archive/" + author + ".html"
+        author_name = author.split("/")[-1]
+        author_page = "/authors/" + author_name + ".html"
+        archive_page = "/archive/" + author_name + ".html"
         author_path = {}
         archive_path = {}
         for l in self.locales:
             author_path[l["code"]] = self.config['domain'] + l['build path'](author_page)
             archive_path[l["code"]] = self.config['domain'] + l['build path'](archive_page)
+            self.sitemap.add_url(author_path[l['code']], getlastedit(author, sitemap=True), changefreq='monthly', priority='1')
 
         template = load(self.templates_path + "/author.html")
 
@@ -440,7 +477,7 @@ class Builder:
             license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
             license_tag.append(license_soup)
 
-            self.save(soup, self.build_path + l['build path'](author_page))
+            save(soup, self.build_path + l['build path'](author_page))
 
     def build_archive(self, author):
         """Builds an archive page containing authors article
@@ -458,18 +495,19 @@ class Builder:
             if l['articles'] != []:
                locales.append(l)
 
-        author = author.split("/")[-1]
-        author_page = "/authors/" + author + ".html"
+        author_name = author.split("/")[-1]
+        author_page = "/authors/" + author_name + ".html"
         author_path = {}
         for l in locales:
             author_path[l['code']] = self.config['domain'] + l['build path'](author_page)
 
         template = load(self.templates_path + "/archive.html")
 
-        archive_page = "/archive/" + author + ".html"
+        archive_page = "/archive/" + author_name + ".html"
         archive_path = {}
         for l in locales:
             archive_path[l['code']] = self.config['domain'] + l['build path'](archive_page)
+            self.sitemap.add_url(archive_path[l['code']], getlastedit(author, sitemap=True), changefreq='monthly', priority='0.5')
 
 
         for l in locales:
@@ -520,7 +558,7 @@ class Builder:
             license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
             license_tag.append(license_soup)
 
-            self.save(soup, self.build_path + l['build path']("/archive/" + author + ".html")) 
+            save(soup, self.build_path + l['build path']("/archive/" + author_name + ".html")) 
 
 def main():
     parser = ArgumentParser(description="builds statics websites")
