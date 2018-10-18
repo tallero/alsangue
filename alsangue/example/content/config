@@ -1,5 +1,6 @@
 {
-"homepage": 	"http://yourwebsite.domain",
+"domain": 	"http://yourwebsite.domain",
+"homepage":     "/authors/you",
 "locale": 	"en_US.UTF-8",
 "license":      "cc-by-nc-nd"
 }

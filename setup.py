@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name = "alsangue",
-    version = "0.1.5",
+    version = "0.2",
     author = "Pellegrino Prevete",
     author_email = "pellegrinoprevete@gmail.com",
     description = "naive static website builder",

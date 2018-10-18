@@ -18,7 +18,7 @@
                                                                <li>disquisire su Aristotele;</li>
                                                                <li>studiare;</li>
                                                                <li>fare baldoria.</li>
-                                                           <ul>
+                                                           </ul>
                                                         """
                                },
                   "en_US.UTF-8":{        "title":	"Interests",
@@ -31,13 +31,13 @@
                                }
                  },
                  {"it_IT.UTF-8":{	"title":	"Profili",
-                                        "content":      """<ul><li><a href="https://arcipelago.ml">Arcipelago</a>
+                                        "content":      """<ul><li><a href="https://arcipelago.ml">Arcipelago</a></li>
                                                            </ul>
                                                         """
                                },
                  "en_US.UTF-8":{       "title":        "External IDs",
                                         "content":      """<ul>
-                                                               <li><a href="https://arcipelago.ml">Arcipelago</a>
+                                                               <li><a href="https://arcipelago.ml">Arcipelago</a></li>
                                                            </ul>
                                                         """
                                }

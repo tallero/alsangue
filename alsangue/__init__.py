@@ -32,6 +32,7 @@ from os import chdir as cd
 from os import symlink as ln
 from os import remove as rm
 from os.path import realpath, dirname, relpath, getmtime
+from re import sub
 from setproctitle import setproctitle
 from shutil import copyfile as cp
 from time import strftime, strptime, localtime
@@ -116,31 +117,38 @@ def save(soup, file):
 
 class Sitemap:
     def __init__(self, path):
-        code = """<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset> """
+        code = """<?xml version="1.0" encoding="UTF-8"?><urlset xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset> """
         self.path = path
-        self.soup = BeautifulSoup(code, 'lxml')
+        self.soup = BeautifulSoup(code, 'xml')
         self.urlset = self.soup.find('urlset')
 
-    def add_url(self, loc, lastmod=None, changefreq='monthly', priority='0.5'):
+    def add_url(self, loc, lastmod=None, locales={}, changefreq='monthly', priority='0.5'):
         soup = BeautifulSoup('', 'lxml')
         url = soup.new_tag('url')
+        self.urlset.append(url)
+
         loc_tag = soup.new_tag('loc')
         loc_tag.append(loc)
         url.append(loc_tag)
+
         if lastmod != None:
             lastmod_tag = soup.new_tag('lastmod')
             lastmod_tag.append(lastmod)
             url.append(lastmod_tag)
+
+        for code in locales.keys():
+            url.append(BeautifulSoup("", 'xml').new_tag('xhtml:link', attrs={'rel':'alternate', 'hreflang':code, 'href':locales[code]}))
+
         changefreq_tag = soup.new_tag('changefreq')
         changefreq_tag.append(changefreq)
         url.append(changefreq_tag)
+
         priority_tag = soup.new_tag('priority')
         priority_tag.append(priority)
         url.append(priority_tag)
-        self.urlset.append(url)
 
     def save(self):
-        save(self.soup, self.path + "/sitemap.xml")        
+        save(self.soup.prettify(), self.path + "/sitemap.xml")        
 
 class Builder:
     """Builds the website
@@ -274,7 +282,7 @@ class Builder:
             title.string = document[l["ISO/IEC 15897"]]["title"]
 
             content = soup.find(id="content")
-            content_soup = BeautifulSoup(document[l["ISO/IEC 15897"]]['content'], 'lxml')
+            content_soup = BeautifulSoup(document[l["ISO/IEC 15897"]]['content'], 'html.parser')
             content.append(content_soup)
 
             if "date" in document.keys():
@@ -297,11 +305,11 @@ class Builder:
                     locales_tag.append("]")
     
             license_tag = soup.find(id="license")
-            license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
+            license_soup = BeautifulSoup(l[self.config["license"]], 'html.parser')
             license_tag.append(license_soup)
 
             article_sitemap = copy(article_path[l['code']])
-            self.sitemap.add_url(article_sitemap, getlastedit(article, sitemap=True), changefreq='monthly', priority='0.8')
+            self.sitemap.add_url(article_sitemap, getlastedit(article, sitemap=True), locales=article_path, changefreq='monthly', priority='0.8')
 
             save(soup, self.build_path + l['build path'](article_page))
 
@@ -354,7 +362,6 @@ class Builder:
         for l in self.locales:
             author_path[l["code"]] = self.config['domain'] + l['build path'](author_page)
             archive_path[l["code"]] = self.config['domain'] + l['build path'](archive_page)
-            self.sitemap.add_url(author_path[l['code']], getlastedit(author, sitemap=True), changefreq='monthly', priority='1')
 
         template = load(self.templates_path + "/author.html")
 
@@ -402,11 +409,11 @@ class Builder:
             doc_sections = [s for s in document["sections"] if l["ISO/IEC 15897"] in s.keys()]
 
             for s in doc_sections:
-                section = soup.new_tag("div", id=s[l["ISO/IEC 15897"]]["title"])
+                section = soup.new_tag("div", id=sub(" ", "_", s[l["ISO/IEC 15897"]]["title"]))
                 title = soup.new_tag("h2")
                 title.append(s[l["ISO/IEC 15897"]]["title"])
                 content = soup.new_tag("div")
-                content_soup = BeautifulSoup(s[l["ISO/IEC 15897"]]["content"], "lxml")
+                content_soup = BeautifulSoup(s[l["ISO/IEC 15897"]]["content"], "html.parser")
                 content.append(content_soup)
                 section.append(title)
                 section.append(content)
@@ -437,15 +444,15 @@ class Builder:
             if 'pgp' in document.keys():
                 pgp = soup.new_tag("li", id="pgp")
                 pgp.append("PGP: ")
-                pgp_fingerprint = soup.new_tag("font", attrs={"class":"hash"})
+                pgp_fingerprint = soup.new_tag("span", attrs={"class":"hash"})
                 pgp_fingerprint.string = document["pgp"]
                 pgp.append(pgp_fingerprint)
                 contact_types.append(pgp)
 
             if 'doge' in document.keys():
-                doge = soup.new_tag("li", id="btc")
+                doge = soup.new_tag("li", id="doge")
                 doge.append("DOGE: ")
-                doge_address = soup.new_tag("font", attrs={"class":"hash"})
+                doge_address = soup.new_tag("span", attrs={"class":"hash"})
                 doge_address.string = document["doge"]
                 doge.append(doge_address)
                 contact_types.append(doge)
@@ -453,7 +460,7 @@ class Builder:
             if 'btc' in document.keys():
                 btc = soup.new_tag("li", id="btc")
                 btc.append("BTC: ")
-                btc_address = soup.new_tag("font", attrs={"class":"hash"})
+                btc_address = soup.new_tag("span", attrs={"class":"hash"})
                 btc_address.string = document["btc"]
                 btc.append(btc_address)
                 contact_types.append(btc)
@@ -474,8 +481,10 @@ class Builder:
                     locales_tag.append("]")
            
             license_tag = soup.find(id="license")
-            license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
+            license_soup = BeautifulSoup(l[self.config["license"]], 'html.parser')
             license_tag.append(license_soup)
+
+            self.sitemap.add_url(author_path[l['code']], getlastedit(author, sitemap=True), locales=author_path, changefreq='monthly', priority='1')
 
             save(soup, self.build_path + l['build path'](author_page))
 
@@ -507,7 +516,6 @@ class Builder:
         archive_path = {}
         for l in locales:
             archive_path[l['code']] = self.config['domain'] + l['build path'](archive_page)
-            self.sitemap.add_url(archive_path[l['code']], getlastedit(author, sitemap=True), changefreq='monthly', priority='0.5')
 
 
         for l in locales:
@@ -555,8 +563,10 @@ class Builder:
                     locales_tag.append("]")
 
             license_tag = soup.find(id="license")
-            license_soup = BeautifulSoup(l[self.config["license"]], 'lxml')
+            license_soup = BeautifulSoup(l[self.config["license"]], 'html.parser')
             license_tag.append(license_soup)
+
+            self.sitemap.add_url(archive_path[l['code']], getlastedit(author, sitemap=True), locales=archive_path, changefreq='monthly', priority='0.5')
 
             save(soup, self.build_path + l['build path']("/archive/" + author_name + ".html")) 
 

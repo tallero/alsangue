@@ -1,10 +1,10 @@
 {       "it_IT.UTF-8": {	"title":	"Example page",
         			"content":	"""
-                                                Sono una pagina di esempio!
+                                                <p class="content">Sono una pagina di esempio!</p>
 		                                """},
         "en_US.UTF-8": {          "title":       "Example page",
                                  "content":     """
-                                                I'm an example page!
+                                                <p class="content">I'm an example page!</p>
                                                 """
                        },
 	"author":	"You",
