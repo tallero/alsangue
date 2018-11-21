@@ -39,7 +39,7 @@ from time import strftime, strptime, localtime
 import locale
 
 name = "alsangue"
-
+version = "0.2.1"
 setproctitle(name)
 
 hidden = lambda f : f.startswith('.')
@@ -469,6 +469,14 @@ class Builder:
                 btc.append(btc_address)
                 contact_types.append(btc)
 
+            if 'paypal' in document.keys():
+                paypal = soup.new_tag("li", id="paypal")
+                paypal_link = soup.new_tag("a", id="paypal_link", attrs={"href":"https://paypal.me/"+document["paypal"]})
+                paypal_link.append(document["paypal"])
+                paypal.append("Paypal: ")
+                paypal.append(paypal_link)
+                contact_types.append(paypal)
+
             contacts.append(contact_types)
             sections.append(contacts)       
             
@@ -579,13 +587,14 @@ def main():
     parser.add_argument("content_directory", nargs='?', default=getcwd() + "/content", help="directory of the website structure; default: ./content")
     parser.add_argument("build_directory", nargs='?', default=getcwd() + "/build", help="where to create 'build' directory; default: ./build")
     parser.add_argument("--verbose", dest="verbose", action="store_true", default=False, help="extended output")
+    parser.add_argument("--version", dest="version", action="store_true", default=False, help="print alsangue version")
 
     args = parser.parse_args()
     if args.verbose:
         print(args)
         print(args.content_directory)
         print(args.build_directory)
-    build = Builder(content_path=args.content_directory, build_path=args.build_directory)
-            
-
-#builder = Builder()
+    if args.version:
+        print(version)
+    else:
+        build = Builder(content_path=args.content_directory, build_path=args.build_directory)

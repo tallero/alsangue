@@ -2,6 +2,7 @@
 "author":	"You",
 "email":	"you@mywebsite.domain",
 "pgp":		"XXXX XXXX XXXX XXXX XXXX  XXXX XXXX XXXX XXXX XXXX",
+"paypal": 	"you"
 "btc":          "0000000000000000000000mybtcaddress",
 "doge":         "000000000000000000000mydogeaddress",
 "xmpp":		"you@mywebsite.domain",
