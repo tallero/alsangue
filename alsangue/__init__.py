@@ -61,7 +61,7 @@ def date_print(date):
     Returns:
         The date converted (i.e. 26 August 2018)
     """
-    date = strptime(date, "%Y/%M/%d")
+    date = strptime(date, "%Y/%m/%d")
     return strftime('%d %B %Y', date)
 
 def getlastedit(f,sitemap=False):
@@ -111,8 +111,12 @@ def save(soup, file):
         soup: instance of BeautifulSoup object
         file (str): path of the file
     """
-    with open(file, "w") as f:
-        f.write(str(soup))
+    if not type(soup) == str:
+        mode = 'wb'
+    else:
+        mode = 'w'
+    with open(file, mode) as f:
+        f.write(soup)
         f.close()
 
 class Sitemap:
@@ -148,7 +152,7 @@ class Sitemap:
         url.append(priority_tag)
 
     def save(self):
-        save(self.soup.prettify(), self.path + "/sitemap.xml")        
+        save(self.soup.prettify(encoding='utf-8'), self.path + "/sitemap.xml")        
 
 class Builder:
     """Builds the website
@@ -311,7 +315,7 @@ class Builder:
             article_sitemap = copy(article_path[l['code']])
             self.sitemap.add_url(article_sitemap, getlastedit(article, sitemap=True), locales=article_path, changefreq='monthly', priority='0.8')
 
-            save(soup, self.build_path + l['build path'](article_page))
+            save(str(soup), self.build_path + l['build path'](article_page))
 
     def select_articles(self, locale, sort="last_edit_recent_to_old", author=None):
         """Select articles according to different criteria.
@@ -486,7 +490,7 @@ class Builder:
 
             self.sitemap.add_url(author_path[l['code']], getlastedit(author, sitemap=True), locales=author_path, changefreq='monthly', priority='1')
 
-            save(soup, self.build_path + l['build path'](author_page))
+            save(str(soup), self.build_path + l['build path'](author_page))
 
     def build_archive(self, author):
         """Builds an archive page containing authors article
@@ -568,7 +572,7 @@ class Builder:
 
             self.sitemap.add_url(archive_path[l['code']], getlastedit(author, sitemap=True), locales=archive_path, changefreq='monthly', priority='0.5')
 
-            save(soup, self.build_path + l['build path']("/archive/" + author_name + ".html")) 
+            save(str(soup), self.build_path + l['build path']("/archive/" + author_name + ".html")) 
 
 def main():
     parser = ArgumentParser(description="builds statics websites")
