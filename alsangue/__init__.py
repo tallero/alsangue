@@ -31,7 +31,7 @@ from os import listdir, mkdir, getcwd
 from os import chdir as cd
 from os import symlink as ln
 from os import remove as rm
-from os.path import realpath, dirname, relpath, getmtime
+from os.path import join, realpath, dirname, relpath, getmtime
 from re import sub
 from setproctitle import setproctitle
 from shutil import copyfile as cp
@@ -152,7 +152,7 @@ class Sitemap:
         url.append(priority_tag)
 
     def save(self):
-        save(self.soup.prettify(encoding='utf-8'), self.path + "/sitemap.xml")        
+        save(self.soup.prettify(encoding='utf-8'), join(self.path, "sitemap.xml"))
 
 class Builder:
     """Builds the website
@@ -168,16 +168,16 @@ class Builder:
     """
     alsangue_path = dirname(realpath(__file__))
 
-    def __init__(self, content_path=alsangue_path, build_path=alsangue_path + "/build"):
+    def __init__(self, content_path=alsangue_path, build_path=join(alsangue_path, "build")):
 
         alsangue_path = dirname(realpath(__file__))
 
         self.build_path = realpath(build_path)
         self.content_path = realpath(content_path)
 
-        self.config = dict_from_file(content_path + "/config")
+        self.config = dict_from_file(join(content_path, "config"))
 
-        locales = [realpath(alsangue_path + "/locales/" + l) for l in ls(alsangue_path + "/locales")]
+        locales = [realpath(join(alsangue_path, "locales", l)) for l in ls(join(alsangue_path, "locales"))]
         self.locales = [dict_from_file(l) for l in locales]
         for l in self.locales:
             if l["ISO/IEC 15897"] != self.config["locale"]:
@@ -189,10 +189,10 @@ class Builder:
 
         self.sitemap = Sitemap(build_path)
 
-        self.templates_path = content_path + "/templates"
+        self.templates_path = join(content_path, "templates")
       
-        self.articles = [realpath(content_path + "/articles/" + a) for a in ls(content_path + "/articles")]
-        self.authors = [realpath(content_path + "/authors/" + a) for a in ls(content_path + "/authors")]
+        self.articles = [realpath(join(content_path, "articles", a)) for a in ls(join(content_path, "articles"))]
+        self.authors = [realpath(join(content_path, "authors", a)) for a in ls(join(content_path, "authors"))]
  
         for a in self.articles:
             self.build_article(a)
@@ -202,10 +202,10 @@ class Builder:
 
         for l in self.locales:
             try:
-                ln(self.build_path + l['build path'](self.config['homepage'] + ".html"), self.build_path + l['build path']("/index.html"))
+                ln(join(self.build_path, l['code'], self.config['homepage'] + ".html"), join(self.build_path, l['code'], "index.html"))
             except FileExistsError as e:
-                rm(self.build_path + l['build path']("/index.html"))
-                ln(self.build_path + l['build path'](self.config['homepage'] + ".html"), self.build_path + l['build path']("/index.html")) 
+                rm(join(self.build_path, l['code'], "index.html"))
+                ln(join(self.build_path, l['code'], self.config['homepage'] + ".html"), join(self.build_path, l['code'], "index.html")) 
 
         self.sitemap.save()
 
@@ -222,20 +222,20 @@ class Builder:
         except FileExistsError as e:
             pass
         try:
-            mkdir(self.build_path + "/res")
+            mkdir(join(self.build_path, "res"))
         except FileExistsError as e:
             pass
-        for f in ls(self.content_path + "/res"):
-            cp(self.content_path + "/res/" + f, self.build_path + "/res/" + f)
+        for f in ls(join(self.content_path, "res")):
+            cp(join(self.content_path, "res", f), join(self.build_path, "res", f))
 
         for l in self.locales:
             try:
-                mkdir(self.build_path + l['build path']("/"))
+                mkdir(join(self.build_path, l['code']))
             except FileExistsError as e:
                 pass
             for t in types:
                 try:
-                    mkdir(self.build_path + l['build path']("/" + t))
+                    mkdir(join(self.build_path, l['code'], t))
                 except FileExistsError as e:
                     pass
 
@@ -254,13 +254,13 @@ class Builder:
         locales = [loc for loc in self.locales if loc["ISO/IEC 15897"] in document.keys()]
 
         article_name = article.split("/")[-1]
-        article_page = "/articles/" + article_name + ".html"
+        article_page = join("articles", article_name + ".html")
         article_path = {}
         loc = {}
         for l in locales:
-            article_path[l["code"]] = self.config['domain'] + l["build path"](article_page)
+            article_path[l["code"]] = join(self.config['domain'], l["code"], article_page)
 
-        template = load(self.templates_path + "/article.html")
+        template = load(join(self.templates_path, "article.html"))
 
         for l in locales:
             soup = BeautifulSoup(template, 'lxml')
@@ -268,7 +268,9 @@ class Builder:
             html_tag = soup.find(id="html")
             html_tag.attrs["lang"] = l["code"]
 
+            # HEAD
             head = soup.find(id="head")
+            head.attrs['lang'] = l['code']
             title = soup.new_tag("title")
             title.append(document[l["ISO/IEC 15897"]]["title"])
             head.append(title)
@@ -278,7 +280,7 @@ class Builder:
 
             for a in self.authors:
                 if dict_from_file(a)['author'] == document['author']:
-                    author_path = self.config['domain'] + l['build path']("/authors/" + a.split("/")[-1] + ".html")
+                    author_path = join(self.config['domain'], l['code'], "authors", a.split("/")[-1] + ".html")
 
             author.attrs["href"] = author_path 
 
@@ -299,7 +301,7 @@ class Builder:
             locales_tag = soup.find(id="locales")
             for m in locales:
                 if m == l:
-                    locales_content = "[" + m["code"] + "]"
+                    locales_content = "".join(["[", m["code"], "]"])
                     locales_tag.append(locales_content)
                 else:
                     locale_tag = soup.new_tag("a", attrs={"href":article_path[m['code']]})
@@ -315,7 +317,7 @@ class Builder:
             article_sitemap = copy(article_path[l['code']])
             self.sitemap.add_url(article_sitemap, getlastedit(article, sitemap=True), locales=article_path, changefreq='monthly', priority='0.8')
 
-            save(str(soup), self.build_path + l['build path'](article_page))
+            save(str(soup), join(self.build_path, l['code'], article_page))
 
     def select_articles(self, locale, sort="last_edit_recent_to_old", author=None):
         """Select articles according to different criteria.
@@ -359,15 +361,15 @@ class Builder:
         document = dict_from_file(author)
 
         author_name = author.split("/")[-1]
-        author_page = "/authors/" + author_name + ".html"
-        archive_page = "/archive/" + author_name + ".html"
+        author_page = join("authors", author_name + ".html")
+        archive_page = join("archive", author_name + ".html")
         author_path = {}
         archive_path = {}
         for l in self.locales:
-            author_path[l["code"]] = self.config['domain'] + l['build path'](author_page)
-            archive_path[l["code"]] = self.config['domain'] + l['build path'](archive_page)
+            author_path[l["code"]] = join(self.config['domain'], l['code'], author_page)
+            archive_path[l["code"]] = join(self.config['domain'], l['code'], archive_page)
 
-        template = load(self.templates_path + "/author.html")
+        template = load(join(self.templates_path, "author.html"))
 
         for l in self.locales:
             soup = BeautifulSoup(template, 'lxml')
@@ -375,10 +377,12 @@ class Builder:
             html_tag = soup.find(id="html")
             html_tag.attrs["lang"] = l["code"]
 
-            head_tag = soup.find(id="head")
+            # HEAD
+            head = soup.find(id="head")
+            head.attrs['lang'] = l['code']
             page_title = soup.new_tag("title")
             page_title.append(document["author"])
-            head_tag.append(page_title)
+            head.append(page_title)
 
             author_tag = soup.find(id="author")
             author_tag.string = document["author"]
@@ -397,7 +401,7 @@ class Builder:
             for a in showcase_articles[0:5]:
                 article = dict_from_file(a)
                 
-                article_path = self.config['domain'] + l['build path']("/articles/" + a.split("/")[-1] + ".html")
+                article_path = join(self.config['domain'], l['code'], "articles", a.split("/")[-1] + ".html")
                 li = soup.new_tag("li")
                 a = soup.new_tag("a", attrs={"href":article_path})
                 a.append(article[l["ISO/IEC 15897"]]["title"])
@@ -471,7 +475,7 @@ class Builder:
 
             if 'paypal' in document.keys():
                 paypal = soup.new_tag("li", id="paypal")
-                paypal_link = soup.new_tag("a", id="paypal_link", attrs={"href":"https://paypal.me/"+document["paypal"]})
+                paypal_link = soup.new_tag("a", id="paypal_link", attrs={"href":join("https://paypal.me/", document["paypal"])})
                 paypal_link.append(document["paypal"])
                 paypal.append("Paypal: ")
                 paypal.append(paypal_link)
@@ -498,7 +502,7 @@ class Builder:
 
             self.sitemap.add_url(author_path[l['code']], getlastedit(author, sitemap=True), locales=author_path, changefreq='monthly', priority='1')
 
-            save(str(soup), self.build_path + l['build path'](author_page))
+            save(str(soup), join(self.build_path, l['code'], author_page))
 
     def build_archive(self, author):
         """Builds an archive page containing authors article
@@ -517,17 +521,17 @@ class Builder:
                locales.append(l)
 
         author_name = author.split("/")[-1]
-        author_page = "/authors/" + author_name + ".html"
+        author_page = join("authors", author_name + ".html")
         author_path = {}
         for l in locales:
-            author_path[l['code']] = self.config['domain'] + l['build path'](author_page)
+            author_path[l['code']] = join(self.config['domain'], l['code'], author_page)
 
-        template = load(self.templates_path + "/archive.html")
+        template = load(join(self.templates_path, "archive.html"))
 
-        archive_page = "/archive/" + author_name + ".html"
+        archive_page = join("archive", author_name + ".html")
         archive_path = {}
         for l in locales:
-            archive_path[l['code']] = self.config['domain'] + l['build path'](archive_page)
+            archive_path[l['code']] = join(self.config['domain'], l['code'], archive_page)
 
 
         for l in locales:
@@ -536,7 +540,10 @@ class Builder:
 
             html_tag = soup.find(id="html")
             html_tag.attrs["lang"] = l["code"]
+
+            # HEAD
             head = soup.find(id="head")
+            head.attrs['lang'] = l['code']
             page_title = soup.new_tag("title")
             page_title.append(l["archive head"] + document["author"])
             head.append(page_title)
@@ -554,7 +561,7 @@ class Builder:
                 article = dict_from_file(a)
                 a = a.split("/")[-1]
                 if l["ISO/IEC 15897"] in article.keys():
-                    url = self.config['domain'] + l['build path']("/articles/" + a + ".html")
+                    url = join(self.config['domain'], l['code'], "articles", a + ".html")
                     article_tag = soup.new_tag("a", attrs={"href":url})
                     article_tag.append(article[l["ISO/IEC 15897"]]["title"])
                     li = soup.new_tag("li")
@@ -580,7 +587,7 @@ class Builder:
 
             self.sitemap.add_url(archive_path[l['code']], getlastedit(author, sitemap=True), locales=archive_path, changefreq='monthly', priority='0.5')
 
-            save(str(soup), self.build_path + l['build path']("/archive/" + author_name + ".html")) 
+            save(str(soup), join(self.build_path, l['code'], "archive", author_name + ".html")) 
 
 def main():
     parser = ArgumentParser(description="builds statics websites")
