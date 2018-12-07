@@ -179,12 +179,6 @@ class Builder:
 
         locales = [realpath(join(alsangue_path, "locales", l)) for l in ls(join(alsangue_path, "locales"))]
         self.locales = [dict_from_file(l) for l in locales]
-        for l in self.locales:
-            if l["ISO/IEC 15897"] != self.config["locale"]:
-                code = copy(l['code'])
-                l['build path'] = lambda x: "/" + code + x
-            else:
-                l['build path'] = lambda x: "/" + x[1:]
         self.build_tree()
 
         self.sitemap = Sitemap(build_path)
@@ -591,8 +585,8 @@ class Builder:
 
 def main():
     parser = ArgumentParser(description="builds statics websites")
-    parser.add_argument("content_directory", nargs='?', default=getcwd() + "/content", help="directory of the website structure; default: ./content")
-    parser.add_argument("build_directory", nargs='?', default=getcwd() + "/build", help="where to create 'build' directory; default: ./build")
+    parser.add_argument("content_directory", nargs='?', default=join(getcwd(), "content"), help="directory of the website structure; default: ./content")
+    parser.add_argument("build_directory", nargs='?', default=join(getcwd(), "build"), help="where to create 'build' directory; default: ./build")
     parser.add_argument("--verbose", dest="verbose", action="store_true", default=False, help="extended output")
     parser.add_argument("--version", dest="version", action="store_true", default=False, help="print alsangue version")
 
