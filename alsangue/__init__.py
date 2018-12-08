@@ -200,6 +200,13 @@ class Builder:
             except FileExistsError as e:
                 rm(join(self.build_path, l['code'], "index.html"))
                 ln(join(self.build_path, l['code'], self.config['homepage'] + ".html"), join(self.build_path, l['code'], "index.html")) 
+            chosen = dict_from_file(join(alsangue_path, "locales", self.config['locale']))
+            if l['code'] == chosen['code']:
+                try:
+                    ln(join(self.build_path, chosen['code'], self.config['homepage']+".html"), join(self.build_path, "index.html"))
+                except FileExistsError as e:
+                    rm(join(self.build_path, "index.html"))
+                    ln(join(self.build_path, chosen['code'], self.config['homepage']+".html"), join(self.build_path, "index.html")) 
 
         self.sitemap.save()
 
